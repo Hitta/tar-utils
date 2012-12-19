@@ -18,10 +18,13 @@ package se.hitta.tar;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+
+import org.apache.commons.lang3.time.DateUtils;
 
 import com.google.common.collect.Iterators;
 
@@ -38,8 +41,8 @@ public class TarIndex implements Iterable<TarHeader>
     public TarIndex(File tarFile) throws IOException
     {
         this.tarFile = tarFile;
-        this.lastModified = new Date(tarFile.lastModified());
-
+        this.lastModified = DateUtils.truncate(new Date(tarFile.lastModified()), Calendar.SECOND); //trim milliseconds
+        
         TarHeaderIterator tarHeaderIterator = new TarHeaderIterator(tarFile);
 
         try
