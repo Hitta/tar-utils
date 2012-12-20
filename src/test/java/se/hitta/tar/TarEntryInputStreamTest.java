@@ -20,7 +20,7 @@ public class TarEntryInputStreamTest
         
         TarIndex tarIndex =  new TarIndex(tarFile);
         
-        TarHeader header = tarIndex.get("scripts/glUtils.js");
+        TarHeader header = tarIndex.get("scripts/glUtils.js").get();
         
         
         InputStream stream = new TarEntryInputStream(header, tarFile);

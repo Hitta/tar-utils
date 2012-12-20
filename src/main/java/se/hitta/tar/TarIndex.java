@@ -18,57 +18,48 @@ package se.hitta.tar;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 
 import org.apache.commons.lang3.time.DateUtils;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.Iterators;
 
 /**
  * This class will build an index of a provided tar archive.
  */
-public class TarIndex implements Iterable<TarHeader>
+public class TarIndex
 {
-    private final Map<String, TarHeader> headers = new HashMap<String, TarHeader>();
-    public final int size;
+    private final TarHeader[] headers;
+    
     private final File tarFile;
     private final Date lastModified;
     
+    /**
+     * @param tarFile the tar archive to index
+     * @throws IOException if the file cannot be opened for reading
+     */
     public TarIndex(File tarFile) throws IOException
     {
         this.tarFile = tarFile;
         this.lastModified = DateUtils.truncate(new Date(tarFile.lastModified()), Calendar.SECOND); //trim milliseconds
         
         TarHeaderIterator tarHeaderIterator = new TarHeaderIterator(tarFile);
-
-        try
-        {
-            while (tarHeaderIterator.hasNext())
-            {
-                TarHeader header = tarHeaderIterator.next();
-                if(header.getLinkFlag() == TarHeader.LF_NORMAL)
-                {
-                    headers.put(header.getName(), header);                    
-                }
-            }
-        }
-        finally{
-            tarHeaderIterator.close();
-        }
-        this.size = headers.size();
+        this.headers = Iterators.toArray(tarHeaderIterator, TarHeader.class);
+        Arrays.sort(this.headers);
     }
     
     /**
-     * @param key The path of the file, as saved in the tar archive (i.e. including directories)
-     * @return a {@link TarHeader} for the given key, or null if there is no indexed {@link TarHeader} for the given key/path
+     * @param key the path of the file, as saved in the tar archive (i.e. including directories)
+     * @return if found, a {@link TarHeader} will be present in the response, if not it will be absent
      */
-    public TarHeader get(String key)
+    public Optional<TarHeader> get(String key)
     {
-        return headers.get(key);
+        int index = Arrays.binarySearch(headers, TarHeader.buildMatcher(key));
+        
+        return index > 0 ? Optional.of(this.headers[index]) : Optional.<TarHeader>absent(); 
     }
 
     /**
@@ -80,16 +71,18 @@ public class TarIndex implements Iterable<TarHeader>
     }
     
     /**
-     * @return the "last modified" property of the tar archive this index was initialized with
+     * @return the number of indexed files
+     */
+    public long getSize()
+    {
+        return this.headers.length;
+    }
+    
+    /**
+     * @return the "last modified" property of the tar archive this index was initialized with (milliseconds trimmed)
      */
     public Date getLastModified()
     {
         return lastModified;
-    }
-
-    @Override
-    public Iterator<TarHeader> iterator()
-    {
-        return Iterators.unmodifiableIterator(this.headers.values().iterator());
     }
 }

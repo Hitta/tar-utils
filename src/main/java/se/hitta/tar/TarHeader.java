@@ -16,6 +16,7 @@
 
 package se.hitta.tar;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 
 // Header
@@ -84,7 +85,7 @@ import java.util.Arrays;
  * </ul>
  * To save memory, the {@link TarHeader} will not keep a reference to the tar file itself.
  */
-public class TarHeader
+public class TarHeader implements Comparable<TarHeader>
 {
     public static final int DATA_BLOCK = 512;
     public static final int HEADER_BLOCK = 512;
@@ -123,13 +124,39 @@ public class TarHeader
     public static final int USTAR_DEVLEN = 8;
     public static final int USTAR_FILENAME_PREFIX = 155;
 
+    /**
+     * Build a fake TarHeader for use in binary search
+     * @param name the name of the file to base the compare on
+     * @return
+     */
+    static TarHeader buildMatcher(String name)
+    {
+        TarHeader header = new TarHeader(0);
+        try
+        {
+            header.name = name.getBytes("UTF-8");
+        } catch (UnsupportedEncodingException e)
+        {
+            throw new RuntimeException(e);
+        }
+        
+        return header;
+    }
+    
+    /**
+     * Builder for a {@link TarHeader}<br>
+     * Note - the created header wrappes a minimum of the actual header to conserve memory
+     * @param bh the 512 byte tar header
+     * @param fileOffset the offset of the tar header in the tar-archive
+     * @return the newly created {@link TarHeader}
+     */
     public static TarHeader build(byte[] bh, long fileOffset)
     {
         int offset = 0;
 
         TarHeader header = new TarHeader(fileOffset);
 
-        header.name = TarHeader.parseName(bh, offset, TarHeader.NAMELEN);
+        header.name = TarHeader.parseNameAsByteArray(bh, offset, TarHeader.NAMELEN);
         offset += TarHeader.NAMELEN;
         offset += TarHeader.MODELEN;
         offset += TarHeader.UIDLEN;
@@ -142,7 +169,7 @@ public class TarHeader
         return header;
     }
 
-    private String name;
+    private byte[] name;
     private long size;
     private byte linkFlag;
     private long tarFileOffset;
@@ -157,7 +184,13 @@ public class TarHeader
      */
     public String getName()
     {
-        return name;
+        try
+        {
+            return new String(name, "UTF-8");
+        } catch (UnsupportedEncodingException e)
+        {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -201,9 +234,15 @@ public class TarHeader
     @Override
     public String toString()
     {
-        return this.name.toString();
+        return this.getName();
     }
-
+    
+    @Override
+    public int compareTo(TarHeader other)
+    {
+        return this.getName().compareTo(other.getName());
+    }
+    
     /**
      * Parse an octal string from a header buffer. This is used for the file
      * permission mode value.
@@ -229,27 +268,28 @@ public class TarHeader
     /**
      * Parse an entry name from a header buffer.
      * 
-     * @param name
      * @param header
      *            The header buffer from which to parse.
      * @param offset
      *            The offset into the buffer from which to parse.
      * @param length
      *            The number of header bytes to parse.
-     * @return The header's entry name.
+     * @return The header's entry name as an UTF-8 byte array.
      */
-    public static String parseName(byte[] header, int offset, int length)
+    private static byte[] parseNameAsByteArray(byte[] header, int offset, int length)
     {
-        StringBuffer result = new StringBuffer(length);
-
         int end = offset + length;
+        
+        int len = 0;
+        
         for (int i = offset; i < end; ++i)
         {
             if (header[i] == 0)
                 break;
-            result.append((char) header[i]);
+            
+            len++;
         }
-
-        return result.toString();
+        
+        return Arrays.copyOfRange(header, offset, offset + len);
     }
 }
