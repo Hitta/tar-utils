@@ -59,7 +59,7 @@ public class TarIndex
     {
         int index = Arrays.binarySearch(headers, TarHeader.buildMatcher(key));
         
-        return index > 0 ? Optional.of(this.headers[index]) : Optional.<TarHeader>absent(); 
+        return index >= 0 ? Optional.of(this.headers[index]) : Optional.<TarHeader>absent(); 
     }
 
     /**
