@@ -16,6 +16,7 @@
 
 package se.hitta.tar;
 
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 
@@ -85,8 +86,10 @@ import java.util.Arrays;
  * </ul>
  * To save memory, the {@link TarHeader} will not keep a reference to the tar file itself.
  */
-public class TarHeader implements Comparable<TarHeader>
+public class TarHeader implements Comparable<TarHeader>, Serializable
 {
+    private static final long serialVersionUID = 166442038796495755L;
+    
     public static final int DATA_BLOCK = 512;
     public static final int HEADER_BLOCK = 512;
 

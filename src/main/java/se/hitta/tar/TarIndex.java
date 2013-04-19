@@ -17,11 +17,21 @@
 package se.hitta.tar;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.zip.Deflater;
+import java.util.zip.DeflaterOutputStream;
+import java.util.zip.InflaterInputStream;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.DateUtils;
 
 import com.google.common.base.Optional;
@@ -30,8 +40,22 @@ import com.google.common.collect.Iterators;
 /**
  * This class will build an index of a provided tar archive.
  */
-public class TarIndex
+/**
+ * @author jebl01
+ *
+ */
+/**
+ * @author jebl01
+ *
+ */
+/**
+ * @author jebl01
+ *
+ */
+public class TarIndex implements Serializable
 {
+    private static final long serialVersionUID = 2521850273227117136L;
+
     private final TarHeader[] headers;
     
     private final File tarFile;
@@ -84,5 +108,85 @@ public class TarIndex
     public Date getLastModified()
     {
         return lastModified;
+    }
+    
+    /**
+     * Serialization is performed using standard java.io serialization + compression using the ZLIB library
+     * @param file target file for the serialization
+     * @throws IOException if the operation for any reasons fail
+     */
+    public void serialize(File file) throws IOException
+    {
+        FileOutputStream fileOut = null;
+        try
+        {
+            fileOut = new FileOutputStream(file);
+            serialize(fileOut);
+        }
+        finally
+        {
+            IOUtils.closeQuietly(fileOut);
+        }
+    }
+    
+    /**
+     * Serialization is performed using standard java.io serialization + compression using the ZLIB library
+     * @param out target output stream for the serialization
+     * @throws IOException if the operation for any reasons fail
+     */
+    public void serialize(OutputStream out) throws IOException
+    {
+        ObjectOutputStream oOut = null;
+        DeflaterOutputStream dos = null;
+        
+        try
+        {
+            Deflater def = new Deflater(Deflater.BEST_SPEED);
+            
+            
+            dos = new DeflaterOutputStream(out, def);
+            
+            oOut = new ObjectOutputStream(dos);
+            oOut.writeObject(this);
+            
+        } catch (Exception e)
+        {
+            throw new IOException("failed to serialize tarindex", e);
+        }
+        finally
+        {
+            IOUtils.closeQuietly(oOut);
+            IOUtils.closeQuietly(dos);
+        }
+    }
+    
+    /**
+     * Deserialization is performed using standard java.io serialization + decompression using the ZLIB library
+     * @param file the file to deserialize.
+     * @return the deserialized {@link TarIndex}
+     * @throws IOException if the operation for any reasons fail
+     */
+    public static TarIndex deSerialize(File file) throws IOException
+    {
+        ObjectInputStream ois = null;
+        FileInputStream fileIn = null;
+        InflaterInputStream iis = null;
+        try
+        {
+            fileIn = new FileInputStream(file);
+            iis = new InflaterInputStream(fileIn);
+            ois = new ObjectInputStream(iis);
+            return (TarIndex)ois.readObject();
+        }
+        catch(Exception e)
+        {
+            throw new IOException("failed to deserialize tarindex", e);
+        }
+        finally
+        {
+            IOUtils.closeQuietly(ois);
+            IOUtils.closeQuietly(iis);
+            IOUtils.closeQuietly(fileIn);
+        }
     }
 }
