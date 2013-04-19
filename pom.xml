@@ -4,7 +4,7 @@
     <groupId>se.hitta</groupId>
     <artifactId>tar-utils</artifactId>
     <packaging>jar</packaging>
-    <version>0.0.3-SNAPSHOT</version>
+    <version>0.0.3</version>
     <scm>
         <developerConnection>scm:git:ssh://git@github.com/Hitta/${project.artifactId}.git</developerConnection>
         <url>http://github.com/Hitta/${project.artifactId}</url>
