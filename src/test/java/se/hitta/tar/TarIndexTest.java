@@ -1,15 +1,15 @@
 package se.hitta.tar;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
-import org.apache.commons.io.IOUtils;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -51,18 +51,19 @@ public class TarIndexTest
     @Test
     public void canSerializeTarIndex() throws IOException
     {
-        byte[] expected = IOUtils.toByteArray(getClass().getClassLoader().getResourceAsStream("test.ser"));
-        
-        
         URL fileName = getClass().getClassLoader().getResource("test.tar");
         File tarFile = new File(fileName.getPath());
 
-        TarIndex tarIndex = new TarIndex(tarFile);
+        TarIndex tarIndexExpected = new TarIndex(tarFile);
         
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         
-        tarIndex.serialize(bos);
-        assertArrayEquals(expected, bos.toByteArray());
+        tarIndexExpected.serialize(bos);
+        
+        TarIndex tarIndex = TarIndex.deserialize(new ByteArrayInputStream(bos.toByteArray()));
+        
+        assertEquals(tarIndexExpected.getSize(), tarIndex.getSize());
+        assertTrue(tarIndexExpected.getLastModified().equals(tarIndex.getLastModified()));
     }
     
     @Test
@@ -71,7 +72,7 @@ public class TarIndexTest
         URL fileName = getClass().getClassLoader().getResource("test-large.ser");
         File tarFile = new File(fileName.getPath());
         
-        TarIndex tarIndex2 = TarIndex.deSerialize(tarFile);
+        TarIndex tarIndex2 = TarIndex.deserialize(tarFile);
         assertEquals(19778, tarIndex2.getSize());
     }
 }

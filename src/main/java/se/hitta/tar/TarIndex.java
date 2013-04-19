@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
@@ -143,9 +144,7 @@ public class TarIndex implements Serializable
         {
             Deflater def = new Deflater(Deflater.BEST_SPEED);
             
-            
             dos = new DeflaterOutputStream(out, def);
-            
             oOut = new ObjectOutputStream(dos);
             oOut.writeObject(this);
             
@@ -162,19 +161,37 @@ public class TarIndex implements Serializable
     
     /**
      * Deserialization is performed using standard java.io serialization + decompression using the ZLIB library
-     * @param file the file to deserialize.
+     * @param file ths file to deserialize.
      * @return the deserialized {@link TarIndex}
      * @throws IOException if the operation for any reasons fail
      */
-    public static TarIndex deSerialize(File file) throws IOException
+    public static TarIndex deserialize(File file) throws IOException
+    {
+        FileInputStream fis = null;
+        try
+        {
+            fis = new FileInputStream(file);
+            return deserialize(fis);
+        }
+        finally
+        {
+            IOUtils.closeQuietly(fis);
+        }
+    }
+    
+    /**
+     * Deserialization is performed using standard java.io serialization + decompression using the ZLIB library
+     * @param input the input stream deserialize.
+     * @return the deserialized {@link TarIndex}
+     * @throws IOException if the operation for any reasons fail
+     */
+    public static TarIndex deserialize(InputStream input) throws IOException
     {
         ObjectInputStream ois = null;
-        FileInputStream fileIn = null;
         InflaterInputStream iis = null;
         try
         {
-            fileIn = new FileInputStream(file);
-            iis = new InflaterInputStream(fileIn);
+            iis = new InflaterInputStream(input);
             ois = new ObjectInputStream(iis);
             return (TarIndex)ois.readObject();
         }
@@ -186,7 +203,6 @@ public class TarIndex implements Serializable
         {
             IOUtils.closeQuietly(ois);
             IOUtils.closeQuietly(iis);
-            IOUtils.closeQuietly(fileIn);
         }
     }
 }
