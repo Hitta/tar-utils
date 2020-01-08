@@ -13,8 +13,6 @@ import java.net.URL;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.google.common.base.Stopwatch;
-
 public class TarIndexTest
 {
 
@@ -24,10 +22,11 @@ public class TarIndexTest
     {
         System.out.println("indexing...");
         File tarFile = new File("/data/streetview/2013-03-14#3207_19207.tar");
-        Stopwatch stopwatch = new Stopwatch().start();
+
         TarIndex tarIndex = new TarIndex(tarFile);
 
-        System.out.println(tarIndex.getSize() + " headers indexed in " + stopwatch.stop().elapsedMillis() + " millisec");
+
+        System.out.println(tarIndex.getSize() + " headers indexed in");
 
         System.out.println("ready");
     }
